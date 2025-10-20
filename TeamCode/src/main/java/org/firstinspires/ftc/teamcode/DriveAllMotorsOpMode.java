@@ -11,18 +11,19 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
     private DcMotor frontLeft;
     private DcMotor frontRight;
     private DcMotor backLeft;
+    private DcMotor backRight;
+    private Servo servo0; // goBILDA Dual Mode Servo on port 0 (in continuous mode)
 
     @Override
     public void runOpMode() {
         // Initialize motors
-        DcMotor frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        DcMotor frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        DcMotor backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        DcMotor backRight = hardwareMap.get(DcMotor.class, "backRight");
+        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
+        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
+        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
+        backRight = hardwareMap.get(DcMotor.class, "backRight");
 
         // Initialize servo
-        // goBILDA Dual Mode Servo on port 0 (in continuous mode)
-        Servo servo0 = hardwareMap.get(Servo.class, "servo0");
+        servo0 = hardwareMap.get(Servo.class, "servo0");
 
         // Set motor directions
         frontLeft.setDirection(DcMotor.Direction.REVERSE);

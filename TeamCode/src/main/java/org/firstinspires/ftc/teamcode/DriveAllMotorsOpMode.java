@@ -3,50 +3,38 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.CRServo;
 
-@TeleOp(name = "Mecanum Drive Custom")
+@TeleOp(name = "DriveAllMotorsOpMode")
 public class DriveAllMotorsOpMode extends LinearOpMode {
 
-    private DcMotor frontLeft;
-    private DcMotor frontRight;
-    private DcMotor backLeft;
-    private DcMotor backRight;
-    private Servo servo0; // goBILDA Dual Mode Servo on port 0 (in continuous mode)
+    private DcMotor frontLeft, frontRight, backLeft, backRight;
+    private CRServo servo0; // REV Smart Servo in Continuous Mode
 
     @Override
     public void runOpMode() {
-        // Initialize motors
+        // Motors
         frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
         frontRight = hardwareMap.get(DcMotor.class, "frontRight");
         backLeft = hardwareMap.get(DcMotor.class, "backLeft");
         backRight = hardwareMap.get(DcMotor.class, "backRight");
 
-        // Initialize servo
-        servo0 = hardwareMap.get(Servo.class, "servo0");
+        // Servo
+        servo0 = hardwareMap.get(CRServo.class, "servo0");
 
-        // Set motor directions
+        // Motor directions
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
-        frontRight.setDirection(DcMotor.Direction.FORWARD);
-        backRight.setDirection(DcMotor.Direction.FORWARD);
 
-        // Brake mode
-        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        telemetry.addData("Status", "Initialized");
+        // Wait
+        telemetry.addLine("Ready");
         telemetry.update();
-
         waitForStart();
 
         while (opModeIsActive()) {
-            // --- Mecanum Drive ---
-            double y = -gamepad1.left_stick_y;  // Forward/backward
-            double x = -gamepad1.left_stick_x;   // Strafe
-            double rx = gamepad1.right_stick_x;  // Rotate
+            double y = -gamepad1.left_stick_y;
+            double x = -gamepad1.left_stick_x;
+            double rx = gamepad1.right_stick_x;
 
             double frontLeftPower = y + x + rx;
             double backLeftPower = y - x + rx;
@@ -69,27 +57,14 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             frontRight.setPower(frontRightPower);
             backRight.setPower(backRightPower);
 
-            // --- Continuous Rotation Servo Control ---
-            // gamepad1.right_trigger ranges from 0.0 → 1.0
-            // Map it so:
-            //   0.5 = stop
-            //   1.0 = full forward spin
-            //   0.0 = full reverse spin (optional)
-            double triggerValue = gamepad1.right_trigger; // read RT
-            double servoPosition = 0.5 + (triggerValue * 0.5); // 0.5–1.0 (stop → full forward)
+            // Right trigger to spin forward, left trigger to spin backward
+            double servoPower = gamepad1.right_trigger - gamepad1.left_trigger;
+            servo0.setPower(servoPower);
 
-            // You can invert direction if needed:
-            // servoPosition = 0.5 - (triggerValue * 0.5);
-
-            servo0.setPosition(servoPosition);
-
-            // --- Telemetry ---
-            telemetry.addData("FL", frontLeftPower);
-            telemetry.addData("FR", frontRightPower);
-            telemetry.addData("BL", backLeftPower);
-            telemetry.addData("BR", backRightPower);
-            telemetry.addData("Servo Value", servoPosition);
+            telemetry.addData("Servo Power", servoPower);
             telemetry.update();
         }
+
+        servo0.setPower(0);
     }
 }

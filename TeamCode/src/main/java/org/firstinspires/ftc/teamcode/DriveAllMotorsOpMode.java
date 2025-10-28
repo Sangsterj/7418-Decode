@@ -4,60 +4,77 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-@TeleOp(name = "DriveAllMotorsOpMode")
+@TeleOp(name = "DriveAllMotorsOpMode", group = "Linear Opmode")
 public class DriveAllMotorsOpMode extends LinearOpMode {
 
     private DcMotor frontLeft, frontRight, backLeft, backRight;
-    private DcMotor auxMotor; // REV HD Hex Motor on an auxiliary port
+    private DcMotor intake1, intake2;
+
+    // Helper to safely initialize motors
+    private DcMotor safeGetMotor(String name) {
+        try {
+            DcMotor motor = hardwareMap.get(DcMotor.class, name);
+            telemetry.addData("Motor Loaded", name);
+            return motor;
+        } catch (Exception e) {
+            telemetry.addData("⚠ Missing Motor", name);
+            return null;
+        }
+    }
 
     @Override
     public void runOpMode() {
-        // Initialize drive motors
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        backRight = hardwareMap.get(DcMotor.class, "backRight");
+        // Initialize motors safely
+        frontLeft = safeGetMotor("frontLeft");
+        frontRight = safeGetMotor("frontRight");
+        backLeft = safeGetMotor("backLeft");
+        backRight = safeGetMotor("backRight");
+        intake1 = safeGetMotor("intake1");
+        intake2 = safeGetMotor("intake2");
 
-        // Initialize auxiliary motor
-        auxMotor = hardwareMap.get(DcMotor.class, "auxMotor");
+        // Set directions (only for existing motors)
+        if (frontLeft != null) frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        if (backLeft != null) backLeft.setDirection(DcMotor.Direction.REVERSE);
+        if (frontRight != null) frontRight.setDirection(DcMotor.Direction.FORWARD);
+        if (backRight != null) backRight.setDirection(DcMotor.Direction.FORWARD);
 
-        // Motor direction setup
-        frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.REVERSE);
-        frontRight.setDirection(DcMotor.Direction.FORWARD);
-        backRight.setDirection(DcMotor.Direction.FORWARD);
-        auxMotor.setDirection(DcMotor.Direction.FORWARD); // adjust if needed
+        if (intake1 != null) intake1.setDirection(DcMotor.Direction.FORWARD);
+        if (intake2 != null) intake2.setDirection(DcMotor.Direction.REVERSE);
 
-        // Brake mode
-        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        auxMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        // Zero power behavior
+        DcMotor.ZeroPowerBehavior BRAKE = DcMotor.ZeroPowerBehavior.BRAKE;
+        if (frontLeft != null) frontLeft.setZeroPowerBehavior(BRAKE);
+        if (frontRight != null) frontRight.setZeroPowerBehavior(BRAKE);
+        if (backLeft != null) backLeft.setZeroPowerBehavior(BRAKE);
+        if (backRight != null) backRight.setZeroPowerBehavior(BRAKE);
+        if (intake1 != null) intake1.setZeroPowerBehavior(BRAKE);
+        if (intake2 != null) intake2.setZeroPowerBehavior(BRAKE);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
         waitForStart();
 
-        // --- Motor control state variables ---
         boolean spinningForward = false;
         boolean spinningBackward = false;
         boolean rtPressedLast = false;
         boolean ltPressedLast = false;
 
+        double targetIntakePower = 0.0;
+        double currentIntakePower = 0.0;
+        double rampSpeed = 0.05;
+
         while (opModeIsActive()) {
             // --- Mecanum Drive ---
-            double y = -gamepad1.left_stick_y;  // forward/backward
-            double x = -gamepad1.left_stick_x;  // strafe
-            double rx = gamepad1.right_stick_x; // rotation
+            double y = -gamepad1.left_stick_y;
+            double x = -gamepad1.left_stick_x;
+            double rx = gamepad1.right_stick_x;
 
             double frontLeftPower = y + x + rx;
             double backLeftPower = y - x + rx;
             double frontRightPower = y - x - rx;
             double backRightPower = y + x - rx;
 
-            // Normalize powers
             double max = Math.max(
                     Math.max(Math.abs(frontLeftPower), Math.abs(backLeftPower)),
                     Math.max(Math.abs(frontRightPower), Math.abs(backRightPower))
@@ -69,59 +86,65 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
                 backRightPower /= max;
             }
 
-            frontLeft.setPower(frontLeftPower);
-            backLeft.setPower(backLeftPower);
-            frontRight.setPower(frontRightPower);
-            backRight.setPower(backRightPower);
+            if (frontLeft != null) frontLeft.setPower(frontLeftPower);
+            if (backLeft != null) backLeft.setPower(backLeftPower);
+            if (frontRight != null) frontRight.setPower(frontRightPower);
+            if (backRight != null) backRight.setPower(backRightPower);
 
-            // --- Toggle-based Hex Motor Control ---
+            // --- Toggle Intake Controls ---
             boolean rtPressedNow = gamepad1.right_trigger > 0.5;
             boolean ltPressedNow = gamepad1.left_trigger > 0.5;
 
-            // Detect rising edge for RT
             if (rtPressedNow && !rtPressedLast) {
                 if (spinningForward) {
                     spinningForward = false;
+                    targetIntakePower = 0.0;
                 } else {
                     spinningForward = true;
                     spinningBackward = false;
+                    targetIntakePower = 1.0;
                 }
             }
 
-            // Detect rising edge for LT
             if (ltPressedNow && !ltPressedLast) {
                 if (spinningBackward) {
                     spinningBackward = false;
+                    targetIntakePower = 0.0;
                 } else {
                     spinningBackward = true;
                     spinningForward = false;
+                    targetIntakePower = -1.0;
                 }
             }
 
             rtPressedLast = rtPressedNow;
             ltPressedLast = ltPressedNow;
 
-            // Apply motor power
-            if (spinningForward) {
-                auxMotor.setPower(1.0);
-            } else if (spinningBackward) {
-                auxMotor.setPower(-1.0);
-            } else {
-                auxMotor.setPower(0.0);
+            // Smooth ramping
+            if (Math.abs(targetIntakePower - currentIntakePower) > 0.01) {
+                if (currentIntakePower < targetIntakePower)
+                    currentIntakePower += rampSpeed;
+                else
+                    currentIntakePower -= rampSpeed;
+
+                currentIntakePower = Math.max(-1.0, Math.min(1.0, currentIntakePower));
             }
 
-            // --- Telemetry ---
+            if (intake1 != null) intake1.setPower(currentIntakePower);
+            if (intake2 != null) intake2.setPower(currentIntakePower);
+
             telemetry.addData("FL", frontLeftPower);
             telemetry.addData("FR", frontRightPower);
             telemetry.addData("BL", backLeftPower);
             telemetry.addData("BR", backRightPower);
-            telemetry.addData("Aux Motor Power", auxMotor.getPower());
-            telemetry.addData("Forward Spin", spinningForward);
-            telemetry.addData("Backward Spin", spinningBackward);
+            telemetry.addData("Target Intake", targetIntakePower);
+            telemetry.addData("Current Intake", currentIntakePower);
+            telemetry.addData("Forward?", spinningForward);
+            telemetry.addData("Backward?", spinningBackward);
             telemetry.update();
         }
 
-        // Stop everything on end
-        auxMotor.setPower(0);
+        if (intake1 != null) intake1.setPower(0);
+        if (intake2 != null) intake2.setPower(0);
     }
 }

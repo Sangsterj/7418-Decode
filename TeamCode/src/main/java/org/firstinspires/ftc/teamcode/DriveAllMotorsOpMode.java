@@ -55,6 +55,9 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
 
         waitForStart();
 
+        double currentIntakePower = 0.0;
+        double rampRate = 0.05;  // smaller = smoother/slower ramp
+
         while (opModeIsActive()) {
             // --- Mecanum Drive ---
             double y = -gamepad1.left_stick_y;  // forward/backward
@@ -83,27 +86,40 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             if (frontRight != null) frontRight.setPower(frontRightPower);
             if (backRight != null) backRight.setPower(backRightPower);
 
-            // --- Intake Controls (Trigger-Analog) ---
+            // --- Intake Controls with Smooth Deceleration ---
             double forward = gamepad1.right_trigger;  // 0.0 → 1.0
             double reverse = gamepad1.left_trigger;   // 0.0 → 1.0
+            double targetIntakePower = forward - reverse;  // desired power
 
-            double intakePower = forward - reverse;   // net power (-1.0 to 1.0)
+            // Smooth ramp toward target power
+            if (Math.abs(targetIntakePower - currentIntakePower) > 0.01) {
+                if (targetIntakePower > currentIntakePower)
+                    currentIntakePower += rampRate;
+                else
+                    currentIntakePower -= rampRate;
 
-            if (intake1 != null) intake1.setPower(intakePower);
-            if (intake2 != null) intake2.setPower(intakePower);
+                // Clamp to range
+                currentIntakePower = Math.max(-1.0, Math.min(1.0, currentIntakePower));
+            } else {
+                currentIntakePower = targetIntakePower;
+            }
+
+            if (intake1 != null) intake1.setPower(currentIntakePower);
+            if (intake2 != null) intake2.setPower(currentIntakePower);
 
             // --- Telemetry ---
             telemetry.addData("FL", frontLeftPower);
             telemetry.addData("FR", frontRightPower);
             telemetry.addData("BL", backLeftPower);
             telemetry.addData("BR", backRightPower);
-            telemetry.addData("Intake Power", intakePower);
+            telemetry.addData("Target Intake", targetIntakePower);
+            telemetry.addData("Current Intake", currentIntakePower);
             telemetry.addData("RT", forward);
             telemetry.addData("LT", reverse);
             telemetry.update();
         }
 
-        // Stop motors on exit
+        // Stop motors when OpMode ends
         if (intake1 != null) intake1.setPower(0);
         if (intake2 != null) intake2.setPower(0);
     }

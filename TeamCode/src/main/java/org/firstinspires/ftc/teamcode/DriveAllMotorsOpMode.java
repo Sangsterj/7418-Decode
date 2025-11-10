@@ -4,72 +4,59 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-@TeleOp(name = "DriveAllMotorsOpMode", group = "Linear Opmode")
+@TeleOp(name = "DriveAllMotorsOpMode")
 public class DriveAllMotorsOpMode extends LinearOpMode {
 
-    private DcMotor frontLeft, frontRight, backLeft, backRight;
-    private DcMotor intake1, intake2;
-
-    // Safe hardware initialization helper
-    private DcMotor safeGetMotor(String name) {
-        try {
-            DcMotor motor = hardwareMap.get(DcMotor.class, name);
-            telemetry.addData("Motor Loaded", name);
-            return motor;
-        } catch (Exception e) {
-            telemetry.addData("⚠ Missing Motor", name);
-            return null;
-        }
-    }
+    private DcMotor frontLeft;
+    private DcMotor frontRight;
+    private DcMotor backLeft;
+    private DcMotor backRight;
+    private DcMotor outtake1;
+    private DcMotor outtake2;
+    private DcMotor intake;
 
     @Override
     public void runOpMode() {
-        // Initialize motors safely
-        frontLeft = safeGetMotor("frontLeft");
-        frontRight = safeGetMotor("frontRight");
-        backLeft = safeGetMotor("backLeft");
-        backRight = safeGetMotor("backRight");
-        intake1 = safeGetMotor("intake1");
-        intake2 = safeGetMotor("intake2");
+        // --- Initialize drive motors (safe mapping) ---
+        try { frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); } catch (Exception e) {}
+        try { frontRight = hardwareMap.get(DcMotor.class, "frontRight"); } catch (Exception e) {}
+        try { backLeft = hardwareMap.get(DcMotor.class, "backLeft"); } catch (Exception e) {}
+        try { backRight = hardwareMap.get(DcMotor.class, "backRight"); } catch (Exception e) {}
 
-        // --- Motor Directions ---
+        // --- Outtake motors ---
+        try { outtake1 = hardwareMap.get(DcMotor.class, "outtake1"); } catch (Exception e) {}
+        try { outtake2 = hardwareMap.get(DcMotor.class, "outtake2"); } catch (Exception e) {}
+
+        // --- Intake motor ---
+        try { intake = hardwareMap.get(DcMotor.class, "intake"); } catch (Exception e) {}
+
+        // --- Motor directions ---
         if (frontLeft != null) frontLeft.setDirection(DcMotor.Direction.REVERSE);
         if (backLeft != null) backLeft.setDirection(DcMotor.Direction.REVERSE);
         if (frontRight != null) frontRight.setDirection(DcMotor.Direction.FORWARD);
         if (backRight != null) backRight.setDirection(DcMotor.Direction.FORWARD);
 
-        if (intake1 != null) intake1.setDirection(DcMotor.Direction.FORWARD);
-        if (intake2 != null) intake2.setDirection(DcMotor.Direction.REVERSE);
-
-        // --- Zero Power Behavior ---
-        DcMotor.ZeroPowerBehavior BRAKE = DcMotor.ZeroPowerBehavior.BRAKE;
-        if (frontLeft != null) frontLeft.setZeroPowerBehavior(BRAKE);
-        if (frontRight != null) frontRight.setZeroPowerBehavior(BRAKE);
-        if (backLeft != null) backLeft.setZeroPowerBehavior(BRAKE);
-        if (backRight != null) backRight.setZeroPowerBehavior(BRAKE);
-        if (intake1 != null) intake1.setZeroPowerBehavior(BRAKE);
-        if (intake2 != null) intake2.setZeroPowerBehavior(BRAKE);
+        if (frontLeft != null) frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        if (frontRight != null) frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        if (backLeft != null) backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        if (backRight != null) backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
         waitForStart();
 
-        double currentIntakePower = 0.0;
-        double rampRate = 0.05;  // smaller = smoother/slower ramp
-
         while (opModeIsActive()) {
             // --- Mecanum Drive ---
-            double y = -gamepad1.left_stick_y;  // forward/backward
-            double x = -gamepad1.left_stick_x;  // strafe
-            double rx = gamepad1.right_stick_x; // rotate
+            double y = -gamepad1.left_stick_y;  // Forward/backward
+            double x = -gamepad1.left_stick_x;  // Strafe
+            double rx = gamepad1.right_stick_x; // Rotate
 
             double frontLeftPower = y + x + rx;
             double backLeftPower = y - x + rx;
             double frontRightPower = y - x - rx;
             double backRightPower = y + x - rx;
 
-            // Normalize powers
             double max = Math.max(
                     Math.max(Math.abs(frontLeftPower), Math.abs(backLeftPower)),
                     Math.max(Math.abs(frontRightPower), Math.abs(backRightPower))
@@ -86,41 +73,38 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             if (frontRight != null) frontRight.setPower(frontRightPower);
             if (backRight != null) backRight.setPower(backRightPower);
 
-            // --- Intake Controls with Smooth Deceleration ---
-            double forward = gamepad1.right_trigger;  // 0.0 → 1.0
-            double reverse = gamepad1.left_trigger;   // 0.0 → 1.0
-            double targetIntakePower = forward - reverse;  // desired power
+            // --- Outtake Motors (Triggers + Deadband) ---
+            double forward = gamepad1.right_trigger;
+            double reverse = gamepad1.left_trigger;
+            double outtakePower = forward - reverse;
 
-            // Smooth ramp toward target power
-            if (Math.abs(targetIntakePower - currentIntakePower) > 0.01) {
-                if (targetIntakePower > currentIntakePower)
-                    currentIntakePower += rampRate;
-                else
-                    currentIntakePower -= rampRate;
+            // Deadband
+            if (Math.abs(outtakePower) < 0.05) outtakePower = 0;
 
-                // Clamp to range
-                currentIntakePower = Math.max(-1.0, Math.min(1.0, currentIntakePower));
-            } else {
-                currentIntakePower = targetIntakePower;
+            if (outtake1 != null) outtake1.setPower(outtakePower);
+            if (outtake2 != null) outtake2.setPower(outtakePower);
+
+            // --- Intake Motor (A and Y Buttons) ---
+            double intakePower = 0;
+            if (gamepad1.a) {
+                intakePower = 1.0;   // Forward
+            } else if (gamepad1.y) {
+                intakePower = -1.0;  // Reverse
             }
 
-            if (intake1 != null) intake1.setPower(currentIntakePower);
-            if (intake2 != null) intake2.setPower(currentIntakePower);
+            if (intake != null) intake.setPower(intakePower);
 
             // --- Telemetry ---
-            telemetry.addData("FL", frontLeftPower);
-            telemetry.addData("FR", frontRightPower);
-            telemetry.addData("BL", backLeftPower);
-            telemetry.addData("BR", backRightPower);
-            telemetry.addData("Target Intake", targetIntakePower);
-            telemetry.addData("Current Intake", currentIntakePower);
-            telemetry.addData("RT", forward);
-            telemetry.addData("LT", reverse);
+            telemetry.addData("Drive", "FL %.2f | FR %.2f | BL %.2f | BR %.2f",
+                    frontLeftPower, frontRightPower, backLeftPower, backRightPower);
+            telemetry.addData("Outtake Power", outtakePower);
+            telemetry.addData("Intake Power", intakePower);
             telemetry.update();
         }
 
-        // Stop motors when OpMode ends
-        if (intake1 != null) intake1.setPower(0);
-        if (intake2 != null) intake2.setPower(0);
+        // Stop motors
+        if (outtake1 != null) outtake1.setPower(0);
+        if (outtake2 != null) outtake2.setPower(0);
+        if (intake != null) intake.setPower(0);
     }
 }

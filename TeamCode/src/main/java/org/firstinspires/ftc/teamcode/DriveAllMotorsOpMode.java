@@ -47,7 +47,7 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            // --- Mecanum Drive ---
+            // --- Mechanum Drive ---
             double y = -gamepad1.left_stick_y;  // Forward/backward
             double x = -gamepad1.left_stick_x;  // Strafe
             double rx = gamepad1.right_stick_x; // Rotate
@@ -87,9 +87,9 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // --- Intake Motor (A and Y Buttons) ---
             double intakePower = 0;
             if (gamepad1.a) {
-                intakePower = 1.0;   // Forward
+                intakePower = -1.0;   // Forward
             } else if (gamepad1.y) {
-                intakePower = -1.0;  // Reverse
+                intakePower = 1.0;  // Reverse
             }
 
             if (intake != null) intake.setPower(intakePower);

@@ -3,38 +3,36 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 @TeleOp(name = "DriveAllMotorsOpMode")
 public class DriveAllMotorsOpMode extends LinearOpMode {
 
-    private DcMotor frontLeft;
-    private DcMotor frontRight;
-    private DcMotor backLeft;
-    private DcMotor backRight;
-    private DcMotor outtake1;
-    private DcMotor outtake2;
+    private DcMotor frontLeft, frontRight, backLeft, backRight;
+    private DcMotorEx outtake1, outtake2;
     private DcMotor intake;
 
     @Override
     public void runOpMode() {
-        // --- Initialize drive motors (safe mapping) ---
-        try { frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); } catch (Exception e) {}
-        try { frontRight = hardwareMap.get(DcMotor.class, "frontRight"); } catch (Exception e) {}
-        try { backLeft = hardwareMap.get(DcMotor.class, "backLeft"); } catch (Exception e) {}
-        try { backRight = hardwareMap.get(DcMotor.class, "backRight"); } catch (Exception e) {}
 
-        // --- Outtake motors ---
-        try { outtake1 = hardwareMap.get(DcMotor.class, "outtake1"); } catch (Exception e) {}
-        try { outtake2 = hardwareMap.get(DcMotor.class, "outtake2"); } catch (Exception e) {}
+        // ----------------------
+        // SAFE MOTOR MAPPING
+        // ----------------------
+        try { frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); } catch (Exception ignored) {}
+        try { frontRight = hardwareMap.get(DcMotor.class, "frontRight"); } catch (Exception ignored) {}
+        try { backLeft = hardwareMap.get(DcMotor.class, "backLeft"); } catch (Exception ignored) {}
+        try { backRight = hardwareMap.get(DcMotor.class, "backRight"); } catch (Exception ignored) {}
 
-        // --- Intake motor ---
-        try { intake = hardwareMap.get(DcMotor.class, "intake"); } catch (Exception e) {}
+        try { outtake1 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake1"); } catch (Exception ignored) {}
+        try { outtake2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake2"); } catch (Exception ignored) {}
 
-        // --- Motor directions ---
+        try { intake = hardwareMap.get(DcMotor.class, "intake"); } catch (Exception ignored) {}
+
+        // ----------------------
+        // MOTOR DIRECTIONS
+        // ----------------------
         if (frontLeft != null) frontLeft.setDirection(DcMotor.Direction.REVERSE);
         if (backLeft != null) backLeft.setDirection(DcMotor.Direction.REVERSE);
-        if (frontRight != null) frontRight.setDirection(DcMotor.Direction.FORWARD);
-        if (backRight != null) backRight.setDirection(DcMotor.Direction.FORWARD);
 
         if (frontLeft != null) frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         if (frontRight != null) frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -47,64 +45,84 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            // --- Mechanum Drive ---
-            double y = -gamepad1.left_stick_y;  // Forward/backward
-            double x = -gamepad1.left_stick_x;  // Strafe
-            double rx = gamepad1.right_stick_x; // Rotate
 
-            double frontLeftPower = y + x + rx;
-            double backLeftPower = y - x + rx;
-            double frontRightPower = y - x - rx;
-            double backRightPower = y + x - rx;
+            // ----------------------
+            // MECANUM DRIVE
+            // ----------------------
+            double y = -gamepad1.left_stick_y;
+            double x = -gamepad1.left_stick_x;
+            double rx = gamepad1.right_stick_x;
 
-            double max = Math.max(
-                    Math.max(Math.abs(frontLeftPower), Math.abs(backLeftPower)),
-                    Math.max(Math.abs(frontRightPower), Math.abs(backRightPower))
-            );
-            if (max > 1.0) {
-                frontLeftPower /= max;
-                backLeftPower /= max;
-                frontRightPower /= max;
-                backRightPower /= max;
+            double flPower = y + x + rx;
+            double blPower = y - x + rx;
+            double frPower = y - x - rx;
+            double brPower = y + x - rx;
+
+            double max = Math.max(Math.max(Math.abs(flPower), Math.abs(blPower)),
+                    Math.max(Math.abs(frPower), Math.abs(brPower)));
+
+            if (max > 1) {
+                flPower /= max;
+                blPower /= max;
+                frPower /= max;
+                brPower /= max;
             }
 
-            if (frontLeft != null) frontLeft.setPower(frontLeftPower);
-            if (backLeft != null) backLeft.setPower(backLeftPower);
-            if (frontRight != null) frontRight.setPower(frontRightPower);
-            if (backRight != null) backRight.setPower(backRightPower);
+            if (frontLeft != null) frontLeft.setPower(flPower);
+            if (backLeft != null) backLeft.setPower(blPower);
+            if (frontRight != null) frontRight.setPower(frPower);
+            if (backRight != null) backRight.setPower(brPower);
 
-            // --- Outtake Motors (Triggers + Deadband) ---
-            double forward = gamepad1.right_trigger;
-            double reverse = gamepad1.left_trigger;
-            double outtakePower = forward - reverse;
+            // ----------------------
+            // OUTTAKE MOTORS (OVERCLOCKED)
+            // ----------------------
+            double forward = gamepad1.right_trigger; // 0..1
+            double reverse = gamepad1.left_trigger;  // 0..1
+            double input = forward - reverse;        // -1..1
 
             // Deadband
-            if (Math.abs(outtakePower) < 0.05) outtakePower = 0;
+            if (Math.abs(input) < 0.05) input = 0;
 
-            if (outtake1 != null) outtake1.setPower(outtakePower);
-            if (outtake2 != null) outtake2.setPower(outtakePower);
+            if (outtake1 != null && outtake2 != null) {
+                double ticksPerRev = 28;      // REV HD Hex encoder
+                double overclockRPM = 20000;  // extreme speed for testing
+                double targetRPM = input * overclockRPM;
+                double targetTPS = (targetRPM / 60.0) * ticksPerRev;
 
-            // --- Intake Motor (A and Y Buttons) ---
-            double intakePower = 0;
-            if (gamepad1.a) {
-                intakePower = -1.0;   // Forward
-            } else if (gamepad1.y) {
-                intakePower = 1.0;  // Reverse
+                outtake1.setVelocity(targetTPS);
+                outtake2.setVelocity(targetTPS);
+
+                telemetry.addData("Outtake RPM", targetRPM);
             }
+
+            // ----------------------
+            // INTAKE MOTOR
+            // ----------------------
+            double intakePower = 0;
+            if (gamepad1.a) intakePower = -1;
+            else if (gamepad1.y) intakePower = 1;
 
             if (intake != null) intake.setPower(intakePower);
 
-            // --- Telemetry ---
+            // ----------------------
+            // TELEMETRY
+            // ----------------------
             telemetry.addData("Drive", "FL %.2f | FR %.2f | BL %.2f | BR %.2f",
-                    frontLeftPower, frontRightPower, backLeftPower, backRightPower);
-            telemetry.addData("Outtake Power", outtakePower);
+                    flPower, frPower, blPower, brPower);
+            telemetry.addData("Outtake Power Raw", input);
             telemetry.addData("Intake Power", intakePower);
             telemetry.update();
         }
 
-        // Stop motors
-        if (outtake1 != null) outtake1.setPower(0);
-        if (outtake2 != null) outtake2.setPower(0);
+        // ----------------------
+        // STOP ALL MOTORS
+        // ----------------------
+        if (outtake1 != null) outtake1.setVelocity(0);
+        if (outtake2 != null) outtake2.setVelocity(0);
         if (intake != null) intake.setPower(0);
+        if (frontLeft != null) frontLeft.setPower(0);
+        if (frontRight != null) frontRight.setPower(0);
+        if (backLeft != null) backLeft.setPower(0);
+        if (backRight != null) backRight.setPower(0);
     }
 }

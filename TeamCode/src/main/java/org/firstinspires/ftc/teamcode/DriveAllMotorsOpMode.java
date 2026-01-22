@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 public class DriveAllMotorsOpMode extends LinearOpMode {
 
     private DcMotor frontLeft, frontRight, backLeft, backRight;
-    private DcMotorEx outtake1, outtake2;
+    private DcMotorEx outtake;
     private DcMotor intake;
 
     @Override
@@ -23,8 +23,7 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         try { backLeft = hardwareMap.get(DcMotor.class, "backLeft"); } catch (Exception ignored) {}
         try { backRight = hardwareMap.get(DcMotor.class, "backRight"); } catch (Exception ignored) {}
 
-        try { outtake1 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake1"); } catch (Exception ignored) {}
-        try { outtake2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake2"); } catch (Exception ignored) {}
+        try { outtake = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake"); } catch (Exception ignored) {}
 
         try { intake = hardwareMap.get(DcMotor.class, "intake"); } catch (Exception ignored) {}
 
@@ -83,14 +82,13 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // Deadband
             if (Math.abs(input) < 0.05) input = 0;
 
-            if (outtake1 != null && outtake2 != null) {
+            if (outtake != null) {
                 double ticksPerRev = 28;      // REV HD Hex encoder
                 double overclockRPM = 20000;  // extreme speed for testing
                 double targetRPM = input * overclockRPM;
                 double targetTPS = (targetRPM / 60.0) * ticksPerRev;
 
-                outtake1.setVelocity(targetTPS);
-                outtake2.setVelocity(targetTPS);
+                outtake.setVelocity(targetTPS);
 
                 telemetry.addData("Outtake RPM", targetRPM);
             }
@@ -117,8 +115,7 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         // ----------------------
         // STOP ALL MOTORS
         // ----------------------
-        if (outtake1 != null) outtake1.setVelocity(0);
-        if (outtake2 != null) outtake2.setVelocity(0);
+        if (outtake != null) outtake.setVelocity(0);
         if (intake != null) intake.setPower(0);
         if (frontLeft != null) frontLeft.setPower(0);
         if (frontRight != null) frontRight.setPower(0);

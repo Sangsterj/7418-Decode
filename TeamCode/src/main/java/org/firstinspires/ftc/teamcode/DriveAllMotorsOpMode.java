@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.CRServo;
 
 @TeleOp(name = "DriveAllMotorsOpMode")
 public class DriveAllMotorsOpMode extends LinearOpMode {
@@ -12,27 +12,25 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
     private DcMotor frontLeft, frontRight, backLeft, backRight;
     private DcMotorEx outtake;
     private DcMotor intake;
-    private Servo spinner;
+    private CRServo spinner;
     private DcMotor transfer;
 
     @Override
     public void runOpMode() {
 
         // ----------------------
-        // SAFE MOTOR MAPPING
+        // SAFE HARDWARE MAPPING
         // ----------------------
         try { frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); } catch (Exception ignored) {}
         try { frontRight = hardwareMap.get(DcMotor.class, "frontRight"); } catch (Exception ignored) {}
         try { backLeft = hardwareMap.get(DcMotor.class, "backLeft"); } catch (Exception ignored) {}
         try { backRight = hardwareMap.get(DcMotor.class, "backRight"); } catch (Exception ignored) {}
 
-        try { spinner = hardwareMap.servo.get("spinner"); } catch (Exception ignored) {}
-
+        try { spinner = hardwareMap.get(CRServo.class, "spinner"); } catch (Exception ignored) {}
         try { outtake = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake"); } catch (Exception ignored) {}
-
         try { intake = hardwareMap.get(DcMotor.class, "intake"); } catch (Exception ignored) {}
+        try { transfer = hardwareMap.get(DcMotor.class, "transfer"); } catch (Exception ignored) {}
 
-        try { transfer = hardwareMap.get(DcMotor.class, "transfer");} catch (Exception ignored){}
         // ----------------------
         // MOTOR DIRECTIONS
         // ----------------------
@@ -63,8 +61,10 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             double frPower = y - x - rx;
             double brPower = y + x - rx;
 
-            double max = Math.max(Math.max(Math.abs(flPower), Math.abs(blPower)),
-                    Math.max(Math.abs(frPower), Math.abs(brPower)));
+            double max = Math.max(
+                    Math.max(Math.abs(flPower), Math.abs(blPower)),
+                    Math.max(Math.abs(frPower), Math.abs(brPower))
+            );
 
             if (max > 1) {
                 flPower /= max;
@@ -79,40 +79,25 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             if (backRight != null) backRight.setPower(brPower);
 
             // ----------------------
-            // OUTTAKE MOTORS (OVERCLOCKED)
+            // OUTTAKE MOTOR
             // ----------------------
-            double forward = gamepad1.right_trigger; // 0..1
-            double reverse = gamepad1.left_trigger;  // 0..1
-            double input = forward - reverse;        // -1..1
+            double outtakeInput = gamepad1.right_trigger - gamepad1.left_trigger;
+            if (Math.abs(outtakeInput) < 0.05) outtakeInput = 0;
 
-            // Deadband
-            if (Math.abs(input) < 0.05) input = 0;
+            if (outtake != null) outtake.setPower(outtakeInput);
 
-            if (outtake != null) {
-                double ticksPerRev = 28;      // REV HD Hex encoder
-                double overclockRPM = 20000;  // extreme speed for testing
-                double targetRPM = input * overclockRPM;
-                double targetTPS = (targetRPM / 60.0) * ticksPerRev;
+            // ----------------------
+            //  SPINNER
+            // ----------------------
+            double spinnerPower = 0;
 
-                outtake.setVelocity(targetTPS);
-
-                telemetry.addData("Outtake RPM", targetRPM);
+            if (gamepad1.left_bumper) {
+                spinnerPower = 1.0;     // forward
+            } else if (gamepad1.right_bumper) {
+                spinnerPower = -1.0;    // backward
             }
 
-            //-----------------------
-            // SERVO MOTOR
-            //-----------------------
-            spinner.setPosition(0.5);
-            boolean leftSpin = gamepad1.right_bumper;
-            boolean rightSpin = gamepad1.left_bumper;
-
-            if (leftSpin == true){
-                spinner.setPosition(0);
-            } else if (rightSpin == true) {
-                spinner.setPosition(1);
-            } else {
-                spinner.setPosition(0);
-            }
+            if (spinner != null) spinner.setPower(spinnerPower);
 
             // ----------------------
             // INTAKE MOTOR
@@ -135,23 +120,8 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // ----------------------
             // TELEMETRY
             // ----------------------
-            telemetry.addData("Drive", "FL %.2f | FR %.2f | BL %.2f | BR %.2f",
-                    flPower, frPower, blPower, brPower);
-            telemetry.addData("Outtake Power Raw", input);
-            telemetry.addData("Intake Power", intakePower);
-            telemetry.addData("Transfer Power", transferPower);
+            telemetry.addData("Spinner Power", spinnerPower);
             telemetry.update();
         }
-
-        // ----------------------
-        // STOP ALL MOTORS
-        // ----------------------
-        if (outtake != null) outtake.setVelocity(0);
-        if (intake != null) intake.setPower(0);
-        if (transfer != null) transfer.setPower(0);
-        if (frontLeft != null) frontLeft.setPower(0);
-        if (frontRight != null) frontRight.setPower(0);
-        if (backLeft != null) backLeft.setPower(0);
-        if (backRight != null) backRight.setPower(0);
     }
 }

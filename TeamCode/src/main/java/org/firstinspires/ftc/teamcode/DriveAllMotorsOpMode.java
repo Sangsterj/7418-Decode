@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.CRServo;
 
 @TeleOp(name = "DriveAllMotorsOpMode")
@@ -42,10 +43,18 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         if (backLeft != null) backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         if (backRight != null) backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        // Optional: reverse spinner if needed
+        if (spinner != null) spinner.setDirection(DcMotorSimple.Direction.FORWARD);
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
         waitForStart();
+
+        // ----------------------
+        // START SPINNER CONTINUOUSLY
+        // ----------------------
+        if (spinner != null) spinner.setPower(1.0); // continuous forward spin
 
         while (opModeIsActive()) {
 
@@ -87,17 +96,16 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             if (outtake != null) outtake.setPower(outtakeInput);
 
             // ----------------------
-            //  SPINNER
+            // OPTIONAL: override spinner with buttons
             // ----------------------
-            double spinnerPower = 0;
-
-            if (gamepad1.left_bumper) {
-                spinnerPower = 1.0;     // forward
-            } else if (gamepad1.right_bumper) {
-                spinnerPower = -1.0;    // backward
+            if (spinner != null) {
+                if (gamepad1.left_bumper) {
+                    spinner.setPower(1.0);     // forward
+                } else if (gamepad1.right_bumper) {
+                    spinner.setPower(-0.4);    // backward
+                }
+                // Otherwise, keep spinning continuously (already set above)
             }
-
-            if (spinner != null) spinner.setPower(spinnerPower);
 
             // ----------------------
             // INTAKE MOTOR
@@ -120,8 +128,20 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // ----------------------
             // TELEMETRY
             // ----------------------
-            telemetry.addData("Spinner Power", spinnerPower);
+            telemetry.addData("Spinner Power", spinner != null ? spinner.getPower() : 0);
             telemetry.update();
         }
+
+        // ----------------------
+        // STOP ALL MOTORS
+        // ----------------------
+        if (outtake != null) outtake.setPower(0);
+        if (intake != null) intake.setPower(0);
+        if (transfer != null) transfer.setPower(0);
+        if (frontLeft != null) frontLeft.setPower(0);
+        if (frontRight != null) frontRight.setPower(0);
+        if (backLeft != null) backLeft.setPower(0);
+        if (backRight != null) backRight.setPower(0);
+        if (spinner != null) spinner.setPower(0);
     }
 }

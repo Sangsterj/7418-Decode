@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "DriveAllMotorsOpMode")
 public class DriveAllMotorsOpMode extends LinearOpMode {
@@ -11,6 +12,8 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
     private DcMotor frontLeft, frontRight, backLeft, backRight;
     private DcMotorEx outtake;
     private DcMotor intake;
+    private Servo spinner;
+    private DcMotor transfer;
 
     @Override
     public void runOpMode() {
@@ -23,10 +26,13 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         try { backLeft = hardwareMap.get(DcMotor.class, "backLeft"); } catch (Exception ignored) {}
         try { backRight = hardwareMap.get(DcMotor.class, "backRight"); } catch (Exception ignored) {}
 
+        try { spinner = hardwareMap.servo.get("spinner"); } catch (Exception ignored) {}
+
         try { outtake = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake"); } catch (Exception ignored) {}
 
         try { intake = hardwareMap.get(DcMotor.class, "intake"); } catch (Exception ignored) {}
 
+        try { transfer = hardwareMap.get(DcMotor.class, "transfer");} catch (Exception ignored){}
         // ----------------------
         // MOTOR DIRECTIONS
         // ----------------------
@@ -93,6 +99,21 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
                 telemetry.addData("Outtake RPM", targetRPM);
             }
 
+            //-----------------------
+            // SERVO MOTOR
+            //-----------------------
+            spinner.setPosition(0.5);
+            boolean leftSpin = gamepad1.right_bumper;
+            boolean rightSpin = gamepad1.left_bumper;
+
+            if (leftSpin == true){
+                spinner.setPosition(0);
+            } else if (rightSpin == true) {
+                spinner.setPosition(1);
+            } else {
+                spinner.setPosition(0);
+            }
+
             // ----------------------
             // INTAKE MOTOR
             // ----------------------
@@ -103,12 +124,22 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             if (intake != null) intake.setPower(intakePower);
 
             // ----------------------
+            // TRANSFER MOTOR
+            // ----------------------
+            double transferPower = 0;
+            if (gamepad1.x) transferPower = -1;
+            else if (gamepad1.b) transferPower = 1;
+
+            if (transfer != null) transfer.setPower(transferPower);
+
+            // ----------------------
             // TELEMETRY
             // ----------------------
             telemetry.addData("Drive", "FL %.2f | FR %.2f | BL %.2f | BR %.2f",
                     flPower, frPower, blPower, brPower);
             telemetry.addData("Outtake Power Raw", input);
             telemetry.addData("Intake Power", intakePower);
+            telemetry.addData("Transfer Power", transferPower);
             telemetry.update();
         }
 
@@ -117,6 +148,7 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         // ----------------------
         if (outtake != null) outtake.setVelocity(0);
         if (intake != null) intake.setPower(0);
+        if (transfer != null) transfer.setPower(0);
         if (frontLeft != null) frontLeft.setPower(0);
         if (frontRight != null) frontRight.setPower(0);
         if (backLeft != null) backLeft.setPower(0);

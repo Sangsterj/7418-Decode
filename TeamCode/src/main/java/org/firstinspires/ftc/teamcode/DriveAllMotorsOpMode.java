@@ -113,7 +113,7 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         }
 
         // ----------------------
-        // STOP ALL THE MOTORS
+        // STOP ALL MOTORS
         // ----------------------
         if (outtake != null) outtake.setVelocity(0);
         if (intake != null) intake.setPower(0);

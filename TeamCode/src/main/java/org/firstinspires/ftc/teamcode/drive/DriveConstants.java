@@ -47,7 +47,7 @@ public class DriveConstants {
     public static double WHEEL_RADIUS = 2; // in
     public static double GEAR_RATIO = 0.8; // output (wheel) speed / input (motor) speed
     public static double TRACK_WIDTH = 14; // in
-
+//TODO: You did the track width and velocity tuning, make sure to do more tomorrow!
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using
      * the built-in velocity PID, *these values are fine as is*. However, if you do not have drive

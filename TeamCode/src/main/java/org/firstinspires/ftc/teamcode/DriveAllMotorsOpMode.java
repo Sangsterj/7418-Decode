@@ -11,7 +11,8 @@ import com.qualcomm.robotcore.hardware.CRServo;
 public class DriveAllMotorsOpMode extends LinearOpMode {
 
     private DcMotor frontLeft, frontRight, backLeft, backRight;
-    private DcMotorEx outtake;
+    private DcMotorEx outtake1;
+    private DcMotorEx outtake2;
     private DcMotor intake;
     private CRServo spinner;
     private DcMotor transfer;
@@ -28,7 +29,8 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         try { backRight = hardwareMap.get(DcMotor.class, "backRight"); } catch (Exception ignored) {}
 
         try { spinner = hardwareMap.get(CRServo.class, "spinner"); } catch (Exception ignored) {}
-        try { outtake = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake"); } catch (Exception ignored) {}
+        try { outtake1 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake"); } catch (Exception ignored) {}
+        try { outtake2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake"); } catch (Exception ignored) {}
         try { intake = hardwareMap.get(DcMotor.class, "intake"); } catch (Exception ignored) {}
         try { transfer = hardwareMap.get(DcMotor.class, "transfer"); } catch (Exception ignored) {}
 
@@ -88,12 +90,13 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             if (backRight != null) backRight.setPower(brPower);
 
             // ----------------------
-            // OUTTAKE MOTOR
+            // OUTTAKE MOTORS
             // ----------------------
             double outtakeInput = gamepad1.right_trigger - gamepad1.left_trigger;
             if (Math.abs(outtakeInput) < 0.05) outtakeInput = 0;
 
-            if (outtake != null) outtake.setPower(outtakeInput);
+            if (outtake1 != null) outtake1.setPower(outtakeInput);
+            if (outtake2 != null) outtake2.setPower(outtakeInput);
 
             // ----------------------
             // OPTIONAL: override spinner with buttons
@@ -135,7 +138,8 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         // ----------------------
         // STOP ALL MOTORS
         // ----------------------
-        if (outtake != null) outtake.setPower(0);
+        if (outtake1 != null) outtake1.setPower(0);
+        if (outtake2 != null) outtake2.setPower(0);
         if (intake != null) intake.setPower(0);
         if (transfer != null) transfer.setPower(0);
         if (frontLeft != null) frontLeft.setPower(0);

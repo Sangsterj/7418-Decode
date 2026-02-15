@@ -23,16 +23,43 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         // ----------------------
         // SAFE HARDWARE MAPPING
         // ----------------------
-        try { frontLeft = hardwareMap.get(DcMotor.class, "frontLeft"); } catch (Exception ignored) {}
-        try { frontRight = hardwareMap.get(DcMotor.class, "frontRight"); } catch (Exception ignored) {}
-        try { backLeft = hardwareMap.get(DcMotor.class, "backLeft"); } catch (Exception ignored) {}
-        try { backRight = hardwareMap.get(DcMotor.class, "backRight"); } catch (Exception ignored) {}
+        try {
+            frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
+        } catch (Exception ignored) {
+        }
+        try {
+            frontRight = hardwareMap.get(DcMotor.class, "frontRight");
+        } catch (Exception ignored) {
+        }
+        try {
+            backLeft = hardwareMap.get(DcMotor.class, "backLeft");
+        } catch (Exception ignored) {
+        }
+        try {
+            backRight = hardwareMap.get(DcMotor.class, "backRight");
+        } catch (Exception ignored) {
+        }
 
-        try { spinner = hardwareMap.get(CRServo.class, "spinner"); } catch (Exception ignored) {}
-        try { outtake1 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake1"); } catch (Exception ignored) {}
-        try { outtake2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake2"); } catch (Exception ignored) {}
-        try { intake = hardwareMap.get(DcMotor.class, "intake"); } catch (Exception ignored) {}
-        try { transfer = hardwareMap.get(DcMotor.class, "transfer"); } catch (Exception ignored) {}
+        try {
+            spinner = hardwareMap.get(CRServo.class, "spinner");
+        } catch (Exception ignored) {
+        }
+        try {
+            outtake1 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake1");
+        } catch (Exception ignored) {
+        }
+        try {
+            outtake2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake2");
+        } catch (Exception ignored) {
+        }
+        try {
+            intake = hardwareMap.get(DcMotor.class, "intake");
+        } catch (Exception ignored) {
+        }
+        try {
+            transfer = hardwareMap.get(DcMotor.class, "transfer");
+        } catch (Exception ignored) {
+        }
 
         // ----------------------
         // MOTOR DIRECTIONS
@@ -99,34 +126,33 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             if (gamepad1.left_trigger > 0) {
                 outtakeInput1 = 1;
                 outtakeInput2 = 1;
-                transferpower = 1;
             } else if (gamepad1.right_trigger > 0) {
                 outtakeInput1 = 0.75;
                 outtakeInput2 = 0.75;
-                transferpower = 1;
 
-            } else if (gamepad1.dpad_up){ // testing
+            } else if (gamepad1.dpad_up) { // testing
                 outtakeInput1 = 1;
                 outtakeInput2 = 0.5;
-                transferpower = 1;
-            }else if (gamepad1.dpad_down){ // testing
+
+            } else if (gamepad1.dpad_down) { // testing
                 outtakeInput1 = 0.5;
                 outtakeInput2 = 1;
-                transferpower = 1;
-            }else if (gamepad1.dpad_left){ // testing
+            } else if (gamepad1.dpad_left) { // testing
                 outtakeInput1 = 1;
                 outtakeInput2 = 0.7;
-                transferpower = 1;
-            }else if (gamepad1.dpad_right){ // testing
+            } else if (gamepad1.dpad_right) { // testing
                 outtakeInput1 = 0.7;
                 outtakeInput2 = 1;
-                transferpower = 1;
             }
 
 
-            if (transfer != null) transfer.setPower(transferpower);
             if (outtake1 != null) outtake1.setPower(outtakeInput1);
             if (outtake2 != null) outtake2.setPower(outtakeInput2 * -1);
+
+            if (gamepad1.b) transferpower = 1;
+
+
+            if (transfer != null) transfer.setPower(transferpower);
 
             telemetry.addData("Front outtake power", outtake1 != null ? outtake1.getPower() : 0);
 
@@ -155,7 +181,6 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             if (intake != null) intake.setPower(intakePower);
 
 
-
             // ----------------------
             // TRANSFER MOTOR
             // ----------------------
@@ -170,19 +195,20 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // ----------------------
             telemetry.addData("Spinner Power", spinner != null ? spinner.getPower() : 0);
             telemetry.update();
-        }
 
-        // ----------------------
-        // STOP ALL MOTORS
-        // ----------------------
-        if (outtake1 != null) outtake1.setPower(0);
-        if (outtake2 != null) outtake2.setPower(0);
-        if (intake != null) intake.setPower(0);
-        if (transfer != null) transfer.setPower(0);
-        if (frontLeft != null) frontLeft.setPower(0);
-        if (frontRight != null) frontRight.setPower(0);
-        if (backLeft != null) backLeft.setPower(0);
-        if (backRight != null) backRight.setPower(0);
-        if (spinner != null) spinner.setPower(0);
+
+            // ----------------------
+            // STOP ALL MOTORS
+            // ----------------------
+            if (outtake1 != null) outtake1.setPower(0);
+            if (outtake2 != null) outtake2.setPower(0);
+            if (intake != null) intake.setPower(0);
+            if (transfer != null) transfer.setPower(0);
+            if (frontLeft != null) frontLeft.setPower(0);
+            if (frontRight != null) frontRight.setPower(0);
+            if (backLeft != null) backLeft.setPower(0);
+            if (backRight != null) backRight.setPower(0);
+            if (spinner != null) spinner.setPower(0);
+        }
     }
 }

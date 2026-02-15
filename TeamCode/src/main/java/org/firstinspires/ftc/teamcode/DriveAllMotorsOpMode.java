@@ -29,8 +29,8 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         try { backRight = hardwareMap.get(DcMotor.class, "backRight"); } catch (Exception ignored) {}
 
         try { spinner = hardwareMap.get(CRServo.class, "spinner"); } catch (Exception ignored) {}
-        try { outtake1 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake"); } catch (Exception ignored) {}
-        try { outtake2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake"); } catch (Exception ignored) {}
+        try { outtake1 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake1"); } catch (Exception ignored) {}
+        try { outtake2 = (DcMotorEx) hardwareMap.get(DcMotor.class, "outtake2"); } catch (Exception ignored) {}
         try { intake = hardwareMap.get(DcMotor.class, "intake"); } catch (Exception ignored) {}
         try { transfer = hardwareMap.get(DcMotor.class, "transfer"); } catch (Exception ignored) {}
 
@@ -63,8 +63,8 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // ----------------------
             // MECANUM DRIVE
             // ----------------------
-            double y = -gamepad1.left_stick_y;
-            double x = -gamepad1.left_stick_x;
+            double y = gamepad1.left_stick_y;
+            double x = gamepad1.left_stick_x;
             double rx = gamepad1.right_stick_x;
 
             double flPower = y + x + rx;
@@ -92,11 +92,46 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // ----------------------
             // OUTTAKE MOTORS
             // ----------------------
-            double outtakeInput = gamepad1.right_trigger - gamepad1.left_trigger;
-            if (Math.abs(outtakeInput) < 0.05) outtakeInput = 0;
+            double outtakeInput1 = 0.0;
+            double outtakeInput2 = 0.0;
+            double transferpower = 0;
 
-            if (outtake1 != null) outtake1.setPower(outtakeInput);
-            if (outtake2 != null) outtake2.setPower(outtakeInput);
+            if (gamepad1.left_trigger > 0) {
+                outtakeInput1 = 1;
+                outtakeInput2 = 1;
+                transferpower = 1;
+            } else if (gamepad1.right_trigger > 0) {
+                outtakeInput1 = 0.75;
+                outtakeInput2 = 0.75;
+                transferpower = 1;
+
+            } else if (gamepad1.dpad_up){ // testing
+                outtakeInput1 = 1;
+                outtakeInput2 = 0.5;
+                transferpower = 1;
+            }else if (gamepad1.dpad_down){ // testing
+                outtakeInput1 = 0.5;
+                outtakeInput2 = 1;
+                transferpower = 1;
+            }else if (gamepad1.dpad_left){ // testing
+                outtakeInput1 = 1;
+                outtakeInput2 = 0.7;
+                transferpower = 1;
+            }else if (gamepad1.dpad_right){ // testing
+                outtakeInput1 = 0.7;
+                outtakeInput2 = 1;
+                transferpower = 1;
+            }
+
+
+            if (transfer != null) transfer.setPower(transferpower);
+            if (outtake1 != null) outtake1.setPower(outtakeInput1);
+            if (outtake2 != null) outtake2.setPower(outtakeInput2 * -1);
+
+            telemetry.addData("Front outtake power", outtake1 != null ? outtake1.getPower() : 0);
+
+
+            telemetry.addData("back outtake power", outtake2 != null ? outtake2.getPower() : 0);
 
             // ----------------------
             // OPTIONAL: override spinner with buttons
@@ -118,6 +153,8 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             else if (gamepad1.y) intakePower = 1;
 
             if (intake != null) intake.setPower(intakePower);
+
+
 
             // ----------------------
             // TRANSFER MOTOR

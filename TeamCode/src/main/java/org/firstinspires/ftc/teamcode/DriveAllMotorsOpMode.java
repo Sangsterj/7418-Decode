@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -76,6 +77,8 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         if (spinner != null) spinner.setDirection(DcMotorSimple.Direction.FORWARD);
 
         telemetry.addData("Status", "Initialized");
+        telemetry.addData("Spinner class", spinner.getClass().getSimpleName());
+
         telemetry.update();
 
         waitForStart();
@@ -90,7 +93,7 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // ----------------------
             // MECANUM DRIVE
             // ----------------------
-            double y = gamepad1.left_stick_y;
+            double y = -gamepad1.left_stick_y;
             double x = gamepad1.left_stick_x;
             double rx = gamepad1.right_stick_x;
 
@@ -135,8 +138,8 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
                 outtakeInput2 = 0.5;
 
             } else if (gamepad1.dpad_down) { // testing
-                outtakeInput1 = 0.5;
-                outtakeInput2 = 1;
+                outtakeInput1 = -0.5;
+                outtakeInput2 = -0.5;
             } else if (gamepad1.dpad_left) { // testing
                 outtakeInput1 = 1;
                 outtakeInput2 = 0.7;
@@ -162,14 +165,14 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // ----------------------
             // OPTIONAL: override spinner with buttons
             // ----------------------
-            if (spinner != null) {
-                if (gamepad1.left_bumper) {
-                    spinner.setPower(1.0);     // forward
-                } else if (gamepad1.right_bumper) {
-                    spinner.setPower(-0.4);    // backward
-                }
-                // Otherwise, keep spinning continuously (already set above)
+            double spinnerPower = 0.0;
+            if (gamepad1.left_bumper) {
+                spinner.setPower(1);
             }
+            else if (gamepad1.right_bumper) {
+                spinner.setPower(-1);
+            }
+
 
             // ----------------------
             // INTAKE MOTOR
@@ -200,15 +203,6 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // ----------------------
             // STOP ALL MOTORS
             // ----------------------
-            if (outtake1 != null) outtake1.setPower(0);
-            if (outtake2 != null) outtake2.setPower(0);
-            if (intake != null) intake.setPower(0);
-            if (transfer != null) transfer.setPower(0);
-            if (frontLeft != null) frontLeft.setPower(0);
-            if (frontRight != null) frontRight.setPower(0);
-            if (backLeft != null) backLeft.setPower(0);
-            if (backRight != null) backRight.setPower(0);
-            if (spinner != null) spinner.setPower(0);
         }
     }
 }

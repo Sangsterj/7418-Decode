@@ -1,5 +1,6 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.util;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
@@ -7,27 +8,10 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.CRServo;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
-import java.util.List;
-
-@TeleOp(name = "DriveAllMotorsOpMode")
-public class DriveAllMotorsOpMode extends LinearOpMode {
-
-    private VisionPortal visionPortal;
-    private AprilTagProcessor aprilTag;
-
-    public void initVision() {
-        aprilTag = new AprilTagProcessor.Builder().build();
-
-        visionPortal = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "Camewa")) // Replace "Webcam 1" with your configured name
-                .addProcessor(aprilTag)
-                .build();
-    }
+@Autonomous(name = "DriveAllMotorsAutoMode")
+public class DriveAllMotorsAutoMode extends LinearOpMode {
 
     private DcMotor frontLeft, frontRight, backLeft, backRight;
     private DcMotorEx outtake1;
@@ -36,10 +20,10 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
     private CRServo spinner;
     private DcMotor transfer;
 
+    ElapsedTime timer = new ElapsedTime();
+
     @Override
     public void runOpMode() {
-
-
 
         // ----------------------
         // SAFE HARDWARE MAPPING
@@ -82,19 +66,6 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         } catch (Exception ignored) {
         }
 
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-
-        for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null) {
-                telemetry.addData("Tag ID", detection.id);
-                telemetry.addData("Pose X", detection.ftcPose.x);
-                telemetry.addData("Pose Y", detection.ftcPose.y);
-                telemetry.addData("Pose Bearing", detection.ftcPose.bearing);
-                telemetry.addData("Pose Range", detection.ftcPose.range);
-                // Use this data for robot movement/localization
-            }
-        }
-
         // ----------------------
         // MOTOR DIRECTIONS
         // ----------------------
@@ -116,6 +87,11 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
 
         waitForStart();
 
+        if (isStopRequested()){
+            return;
+        }
+
+        timer.reset();
         // ----------------------
         // START SPINNER CONTINUOUSLY
         // ----------------------

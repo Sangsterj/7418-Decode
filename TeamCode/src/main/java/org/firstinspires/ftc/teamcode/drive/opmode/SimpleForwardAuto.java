@@ -4,7 +4,7 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-
+//TODO: Work on getting that damn auto for shooting down. IDS 20 for blue, 24 for red.
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.drive.TwoWheelTrackingLocalizer;
 import org.firstinspires.ftc.teamcode.drive.GoBildaPinpointDriver; // Import from your actual package

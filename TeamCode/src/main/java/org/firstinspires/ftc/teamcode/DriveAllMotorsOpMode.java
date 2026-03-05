@@ -33,12 +33,12 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
     private DcMotorEx outtake1;
     private DcMotorEx outtake2;
     private DcMotor intake;
-    private CRServo spinner;
+    private CRServo transfer1, transfer2;
     private DcMotor transfer;
 
     @Override
     public void runOpMode() {
-
+        initVision();
 
 
         // ----------------------
@@ -62,7 +62,7 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         }
 
         try {
-            spinner = hardwareMap.get(CRServo.class, "spinner");
+            transfer1 = hardwareMap.get(CRServo.class, "spinner");
         } catch (Exception ignored) {
         }
         try {
@@ -82,18 +82,6 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         } catch (Exception ignored) {
         }
 
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-
-        for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null) {
-                telemetry.addData("Tag ID", detection.id);
-                telemetry.addData("Pose X", detection.ftcPose.x);
-                telemetry.addData("Pose Y", detection.ftcPose.y);
-                telemetry.addData("Pose Bearing", detection.ftcPose.bearing);
-                telemetry.addData("Pose Range", detection.ftcPose.range);
-                // Use this data for robot movement/localization
-            }
-        }
 
         // ----------------------
         // MOTOR DIRECTIONS
@@ -107,21 +95,41 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         if (backRight != null) backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Optional: reverse spinner if needed
-        if (spinner != null) spinner.setDirection(DcMotorSimple.Direction.FORWARD);
 
         telemetry.addData("Status", "Initialized");
-        telemetry.addData("Spinner class", spinner.getClass().getSimpleName());
+        telemetry.addData("Spinner class transfer 1", transfer1.getClass().getSimpleName());
+        telemetry.addData("Spinner cllass transfer 2", transfer2.getClass().getSimpleName());
+
 
         telemetry.update();
 
+
+
         waitForStart();
+
+
+
+
+
 
         // ----------------------
         // START SPINNER CONTINUOUSLY
         // ----------------------
-        if (spinner != null) spinner.setPower(1.0); // continuous forward spin
 
         while (opModeIsActive()) {
+                List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+                // Iterate through detections and log data
+                for (AprilTagDetection detection : currentDetections) {
+                    if (detection.metadata != null) {
+                        telemetry.addData("Tag ID", detection.id);
+                        telemetry.addData("Pose X", detection.ftcPose.x);
+                        telemetry.addData("Pose Y", detection.ftcPose.y);
+                        telemetry.addData("Pose Bearing", detection.ftcPose.bearing);
+                        telemetry.addData("Pose Range", detection.ftcPose.range);
+                        // Use this data for robot movement/localization
+                    }
+                }
+
 
             // ----------------------
             // MECANUM DRIVE
@@ -200,10 +208,10 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // ----------------------
             double spinnerPower = 0.0;
             if (gamepad1.left_bumper) {
-                spinner.setPower(1);
+                transfer1.setPower(1);
             }
             else if (gamepad1.right_bumper) {
-                spinner.setPower(-1);
+                transfer2.setPower(-1);
             }
 
 
@@ -229,7 +237,6 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // ----------------------
             // TELEMETRY
             // ----------------------
-            telemetry.addData("Spinner Power", spinner != null ? spinner.getPower() : 0);
             telemetry.update();
 
 
@@ -237,5 +244,6 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // STOP ALL MOTORS
             // ----------------------
         }
+        visionPortal.close();
     }
 }

@@ -17,28 +17,29 @@ import java.util.List;
 @TeleOp(name = "DriveAllMotorsOpMode")
 public class DriveAllMotorsOpMode extends LinearOpMode {
 
-    private VisionPortal visionPortal;
-    private AprilTagProcessor aprilTag;
-
-    public void initVision() {
-        aprilTag = new AprilTagProcessor.Builder().build();
-
-        visionPortal = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(WebcamName.class, "Camewa")) // Replace "Webcam 1" with your configured name
-                .addProcessor(aprilTag)
-                .build();
-    }
+//    private VisionPortal visionPortal;
+//    private AprilTagProcessor aprilTag;
+//
+//    public void initVision() {
+//        aprilTag = new AprilTagProcessor.Builder().build();
+//
+//        visionPortal = new VisionPortal.Builder()
+//                .setCamera(hardwareMap.get(WebcamName.class, "Camewa")) // Replace "Webcam 1" with your configured name
+//                .addProcessor(aprilTag)
+//                .build();
+//    }
 
     private DcMotor frontLeft, frontRight, backLeft, backRight;
     private DcMotorEx outtake1;
     private DcMotorEx outtake2;
     private DcMotor intake;
-    private CRServo transfer1, transfer2;
+    private CRServo transfer1;
+    private CRServo transfer2;
     private DcMotor transfer;
 
     @Override
     public void runOpMode() {
-        initVision();
+
 
 
         // ----------------------
@@ -62,7 +63,11 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         }
 
         try {
-            transfer1 = hardwareMap.get(CRServo.class, "spinner");
+            transfer1 = hardwareMap.get(CRServo.class, "transfer1");
+        } catch (Exception ignored) {
+        }
+        try {
+            transfer2 = hardwareMap.get(CRServo.class, "transfer2");
         } catch (Exception ignored) {
         }
         try {
@@ -97,8 +102,6 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         // Optional: reverse spinner if needed
 
         telemetry.addData("Status", "Initialized");
-        telemetry.addData("Spinner class transfer 1", transfer1.getClass().getSimpleName());
-        telemetry.addData("Spinner cllass transfer 2", transfer2.getClass().getSimpleName());
 
 
         telemetry.update();
@@ -117,19 +120,6 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
         // ----------------------
 
         while (opModeIsActive()) {
-                List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-                // Iterate through detections and log data
-                for (AprilTagDetection detection : currentDetections) {
-                    if (detection.metadata != null) {
-                        telemetry.addData("Tag ID", detection.id);
-                        telemetry.addData("Pose X", detection.ftcPose.x);
-                        telemetry.addData("Pose Y", detection.ftcPose.y);
-                        telemetry.addData("Pose Bearing", detection.ftcPose.bearing);
-                        telemetry.addData("Pose Range", detection.ftcPose.range);
-                        // Use this data for robot movement/localization
-                    }
-                }
-
 
             // ----------------------
             // MECANUM DRIVE
@@ -168,10 +158,10 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             double transferpower = 0;
 
             if (gamepad1.left_trigger > 0) {
-                outtakeInput1 = 1;
+                outtakeInput1 = -1;
                 outtakeInput2 = 1;
             } else if (gamepad1.right_trigger > 0) {
-                outtakeInput1 = 0.75;
+                outtakeInput1 = -0.75;
                 outtakeInput2 = 0.75;
 
             } else if (gamepad1.dpad_up) { // testing
@@ -206,12 +196,14 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // ----------------------
             // OPTIONAL: override spinner with buttons
             // ----------------------
-            double spinnerPower = 0.0;
+            double transfer1Power = 0.0;
             if (gamepad1.left_bumper) {
                 transfer1.setPower(1);
+                transfer2.setPower(1);
             }
             else if (gamepad1.right_bumper) {
                 transfer2.setPower(-1);
+                transfer1.setPower(-1);
             }
 
 
@@ -244,6 +236,6 @@ public class DriveAllMotorsOpMode extends LinearOpMode {
             // STOP ALL MOTORS
             // ----------------------
         }
-        visionPortal.close();
+
     }
 }

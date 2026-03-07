@@ -78,10 +78,7 @@ public class DriveAllMotorsAutoMode extends LinearOpMode {
         // Optional: reverse spinner if needed
         if (spinner != null) spinner.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        telemetry.addData("Status", "Initialized");
-        telemetry.addData("Spinner class", spinner.getClass().getSimpleName());
 
-        telemetry.update();
 
         waitForStart();
 
@@ -95,121 +92,31 @@ public class DriveAllMotorsAutoMode extends LinearOpMode {
         // ----------------------
         if (spinner != null) spinner.setPower(1.0); // continuous forward spin
 
-        while (opModeIsActive()) {
 
-            // ----------------------
-            // MECANUM DRIVE
-            // ----------------------
-            double y = -gamepad1.left_stick_y;
-            double x = gamepad1.left_stick_x;
-            double rx = gamepad1.right_stick_x;
 
-            double flPower = y + x + rx;
-            double blPower = y - x + rx;
-            double frPower = y - x - rx;
-            double brPower = y + x - rx;
 
-            double max = Math.max(
-                    Math.max(Math.abs(flPower), Math.abs(blPower)),
-                    Math.max(Math.abs(frPower), Math.abs(brPower))
-            );
+            waitForStart();
 
-            if (max > 1) {
-                flPower /= max;
-                blPower /= max;
-                frPower /= max;
-                brPower /= max;
+            if (opModeIsActive()) {
+
+                // Drive forward
+                frontLeft.setPower(0.5);
+                frontRight.setPower(0.5);
+                backLeft.setPower(0.5);
+                backRight.setPower(0.5);
+
+                sleep(2000); // drive for 2 seconds
+
+                // Stop
+                frontLeft.setPower(0);
+                frontRight.setPower(0);
+                backLeft.setPower(0);
+                backRight.setPower(0);
             }
-
-            if (frontLeft != null) frontLeft.setPower(flPower);
-            if (backLeft != null) backLeft.setPower(blPower);
-            if (frontRight != null) frontRight.setPower(frPower);
-            if (backRight != null) backRight.setPower(brPower);
-
-            // ----------------------
-            // OUTTAKE MOTORS
-            // ----------------------
-            double outtakeInput1 = 0.0;
-            double outtakeInput2 = 0.0;
-            double transferpower = 0;
-
-            if (gamepad1.left_trigger > 0) {
-                outtakeInput1 = 1;
-                outtakeInput2 = 1;
-            } else if (gamepad1.right_trigger > 0) {
-                outtakeInput1 = 0.75;
-                outtakeInput2 = 0.75;
-
-            } else if (gamepad1.dpad_up) { // testing
-                outtakeInput1 = 1;
-                outtakeInput2 = 0.5;
-
-            } else if (gamepad1.dpad_down) { // testing
-                outtakeInput1 = -0.5;
-                outtakeInput2 = -0.5;
-            } else if (gamepad1.dpad_left) { // testing
-                outtakeInput1 = 1;
-                outtakeInput2 = 0.7;
-            } else if (gamepad1.dpad_right) { // testing
-                outtakeInput1 = 0.7;
-                outtakeInput2 = 1;
-            }
-
-
-            if (outtake1 != null) outtake1.setPower(outtakeInput1);
-            if (outtake2 != null) outtake2.setPower(outtakeInput2 * -1);
-
-            if (gamepad1.b) transferpower = 1;
-
-
-            if (transfer != null) transfer.setPower(transferpower);
-
-            telemetry.addData("Front outtake power", outtake1 != null ? outtake1.getPower() : 0);
-
-
-            telemetry.addData("back outtake power", outtake2 != null ? outtake2.getPower() : 0);
-
-            // ----------------------
-            // OPTIONAL: override spinner with buttons
-            // ----------------------
-            double spinnerPower = 0.0;
-            if (gamepad1.left_bumper) {
-                spinner.setPower(1);
-            }
-            else if (gamepad1.right_bumper) {
-                spinner.setPower(-1);
-            }
-
-
-            // ----------------------
-            // INTAKE MOTOR
-            // ----------------------
-            double intakePower = 0;
-            if (gamepad1.a) intakePower = -1;
-            else if (gamepad1.y) intakePower = 1;
-
-            if (intake != null) intake.setPower(intakePower);
-
-
-            // ----------------------
-            // TRANSFER MOTOR
-            // ----------------------
-            double transferPower = 0;
-            if (gamepad1.x) transferPower = -1;
-            else if (gamepad1.b) transferPower = 1;
-
-            if (transfer != null) transfer.setPower(transferPower);
-
-            // ----------------------
-            // TELEMETRY
-            // ----------------------
-            telemetry.addData("Spinner Power", spinner != null ? spinner.getPower() : 0);
-            telemetry.update();
-
 
             // ----------------------
             // STOP ALL MOTORS
             // ----------------------
         }
     }
-}
+
